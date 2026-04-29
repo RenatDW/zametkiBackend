@@ -1,4 +1,4 @@
-module backend/cmd/main.go
+module zametki_backend
 
 go 1.26.1
 
