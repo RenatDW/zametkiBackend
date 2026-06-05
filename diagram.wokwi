@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "author": "Quadcopter F450",
+  "title": "Quadcopter F450 with ESP32",
+  "description": "Complete quadcopter with ESP32, MPU-6050, 4x ESC, and 4x Motors",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp32",
+      "top": 0,
+      "left": 0,
+      "attrs": {
+        "name": "ESP32 DevKit"
+      }
+    },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "mpu",
+      "top": 0,
+      "left": 400,
+      "attrs": {
+        "name": "MPU-6050 IMU"
+      }
+    },
+    {
+      "type": "wokwi-esc",
+      "id": "esc1",
+      "top": 100,
+      "left": 600,
+      "attrs": {
+        "name": "ESC M1"
+      }
+    },
+    {
+      "type": "wokwi-esc",
+      "id": "esc2",
+      "top": 200,
+      "left": 600,
+      "attrs": {
+        "name": "ESC M2"
+      }
+    },
+    {
+      "type": "wokwi-esc",
+      "id": "esc3",
+      "top": 300,
+      "left": 600,
+      "attrs": {
+        "name": "ESC M3"
+      }
+    },
+    {
+      "type": "wokwi-esc",
+      "id": "esc4",
+      "top": 400,
+      "left": 600,
+      "attrs": {
+        "name": "ESC M4"
+      }
+    },
+    {
+      "type": "wokwi-lfm6ds3",
+      "id": "dc_converter",
+      "top": 150,
+      "left": 200,
+      "attrs": {
+        "name": "LM2596 DC-DC (12V→5V)"
+      }
+    },
+    {
+      "type": "wokwi-battery",
+      "id": "battery",
+      "top": 0,
+      "left": 100,
+      "attrs": {
+        "name": "3S Li-Po (11.1V)"
+      }
+    },
+    {
+      "type": "wokwi-capacitor",
+      "id": "cap1",
+      "top": 200,
+      "left": 250,
+      "attrs": {
+        "name": "100µF 16V"
+      }
+    },
+    {
+      "type": "wokwi-capacitor",
+      "id": "cap2",
+      "top": 50,
+      "left": 350,
+      "attrs": {
+        "name": "100nF"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "battery.+",
+      "dc_converter.vin"
+    ],
+    [
+      "battery.-",
+      "dc_converter.gnd"
+    ],
+    [
+      "dc_converter.vout",
+      "cap1.1"
+    ],
+    [
+      "cap1.2",
+      "dc_converter.gnd"
+    ],
+    [
+      "dc_converter.vout",
+      "esp32.vin"
+    ],
+    [
+      "dc_converter.gnd",
+      "esp32.gnd"
+    ],
+    [
+      "cap2.1",
+      "esp32.vin"
+    ],
+    [
+      "cap2.2",
+      "esp32.gnd"
+    ],
+    [
+      "esp32.3v3",
+      "mpu.vcc"
+    ],
+    [
+      "esp32.gnd",
+      "mpu.gnd"
+    ],
+    [
+      "esp32.21",
+      "mpu.sda"
+    ],
+    [
+      "esp32.22",
+      "mpu.scl"
+    ],
+    [
+      "esp32.25",
+      "esc1.signal"
+    ],
+    [
+      "esp32.gnd",
+      "esc1.gnd"
+    ],
+    [
+      "battery.+",
+      "esc1.vcc"
+    ],
+    [
+      "esp32.26",
+      "esc2.signal"
+    ],
+    [
+      "esp32.gnd",
+      "esc2.gnd"
+    ],
+    [
+      "battery.+",
+      "esc2.vcc"
+    ],
+    [
+      "esp32.27",
+      "esc3.signal"
+    ],
+    [
+      "esp32.gnd",
+      "esc3.gnd"
+    ],
+    [
+      "battery.+",
+      "esc3.vcc"
+    ],
+    [
+      "esp32.14",
+      "esc4.signal"
+    ],
+    [
+      "esp32.gnd",
+      "esc4.gnd"
+    ],
+    [
+      "battery.+",
+      "esc4.vcc"
+    ]
+  ]
+}

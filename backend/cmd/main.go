@@ -2,58 +2,72 @@ package main
 
 import (
 	"net/http"
+	"os"
+
+	"notes-server/handlers"
+	"notes-server/middleware"
+	"notes-server/repository"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
-type Handler struct {
-	Logger *zap.SugaredLogger
-	repo   int // todo Реализовать взаимодействие с бд
-}
-
 func main() {
+	_ = godotenv.Load()
+
 	zapLogger, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}
-	defer func(zapLogger *zap.Logger) {
-		err = zapLogger.Sync()
-		if err != nil {
-			panic(err)
-		}
-	}(zapLogger)
+	defer zapLogger.Sync()
 	logger := zapLogger.Sugar()
 
-	h := &Handler{
-		Logger: logger,
-		repo:   0,
+	dsn        := getEnv("DB_DSN",      "notes.db")
+	jwtSecret  := getEnv("JWT_SECRET",  "change-me-in-production")
+	addr       := getEnv("ADDR",        ":8080")
+	storageDir := getEnv("STORAGE_DIR", "storage")
+
+	// Создаём корневую директорию для файлов, если её нет
+	if err := os.MkdirAll(storageDir, 0755); err != nil {
+		logger.Fatalw("failed to create storage dir", "err", err)
 	}
+
+	repo, err := repository.New(dsn)
+	if err != nil {
+		logger.Fatalw("failed to open database", "err", err)
+	}
+
+	h := &handlers.Handler{
+		Logger:     logger,
+		Repo:       repo,
+		JWTSecret:  jwtSecret,
+		StorageDir: storageDir,
+	}
+
 	r := mux.NewRouter()
-	r.HandleFunc("/api/login", h.SyncNote)
-	if err := http.ListenAndServe(":8080", r); err != nil {
+
+	// Публичные маршруты
+	r.HandleFunc("/api/register", h.Register).Methods(http.MethodPost)
+	r.HandleFunc("/api/login",    h.Login).Methods(http.MethodPost)
+
+	// Защищённые маршруты
+	api := r.PathPrefix("/api").Subrouter()
+	api.Use(middleware.Auth(jwtSecret))
+	api.HandleFunc("/files",        h.ListFiles).Methods(http.MethodGet)
+	api.HandleFunc("/files",        h.UploadFile).Methods(http.MethodPost)
+	api.HandleFunc("/files/{uuid}", h.DownloadFile).Methods(http.MethodGet)
+	api.HandleFunc("/files/{uuid}", h.DeleteFile).Methods(http.MethodDelete)
+
+	logger.Infow("server starting", "addr", addr, "storage", storageDir)
+	if err := http.ListenAndServe(addr, r); err != nil {
 		logger.Fatal(err)
 	}
-
 }
 
-func (h *Handler) SyncNote(w http.ResponseWriter, r *http.Request) {
-	h.Logger.Info("/api/login")
-	// var req SyncRequest
-	// json.NewDecoder(r.Body).Decode(&req)
-
-	// updateBytes, _ := base64.StdEncoding.DecodeString(req.Snapshot)
-
-	// err := h.repo.SaveUpdate(req.NoteID, updateBytes, req.ClientID)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), 500)
-	// 	return
-	// }
-
-	// lastID := h.repo.GetLastUpdateID(req.NoteID)
-
-	// json.NewEncoder(w).Encode(SyncResponse{
-	// 	Status:       "ok",
-	// 	LastUpdateID: lastID,
-	// })
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
