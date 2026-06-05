@@ -5,19 +5,19 @@ import "gorm.io/gorm"
 // User — пользователь системы
 type User struct {
 	gorm.Model
-	Username     string  `gorm:"uniqueIndex;not null" json:"username"`
-	PasswordHash string  `gorm:"not null"             json:"-"`
-	Files        []File  `gorm:"foreignKey:UserID"    json:"-"`
+	Username     string `gorm:"uniqueIndex;not null" json:"username"`
+	PasswordHash string `gorm:"not null"             json:"-"`
+	Files        []File `gorm:"foreignKey:UserID"    json:"-"`
 }
 
 // File — метаданные файла; сам файл лежит на диске по пути StoragePath
 type File struct {
 	gorm.Model
-	UUID        string `gorm:"uniqueIndex;not null" json:"uuid"`
-	UserID      uint   `gorm:"not null;index"       json:"user_id"`
+	UUID         string `gorm:"uniqueIndex;not null" json:"uuid"`
+	UserID       uint   `gorm:"not null;index"       json:"user_id"`
 	OriginalName string `gorm:"not null"            json:"name"`
-	Size        int64  `gorm:"not null"             json:"size"`
-	StoragePath string `gorm:"not null"             json:"-"` // путь на диске, клиенту не отдаём
+	Size         int64  `gorm:"not null"             json:"size"`
+	StoragePath  string `gorm:"not null"             json:"-"` // путь на диске, клиенту не отдаём
 }
 
 // --- DTOs ---

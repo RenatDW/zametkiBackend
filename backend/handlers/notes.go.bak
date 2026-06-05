@@ -1,16 +1,28 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"notes-server/middleware"
 	"notes-server/models"
 
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
+
+func toNoteResponse(n models.Note) models.NoteResponse {
+	return models.NoteResponse{
+		ID:        n.ID,
+		Title:     n.Title,
+		Content:   n.Content,
+		CreatedAt: n.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: n.UpdatedAt.Format(time.RFC3339),
+	}
+}
 
 func (h *Handler) GetNotes(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
@@ -21,12 +33,12 @@ func (h *Handler) GetNotes(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	if notes == nil {
-		notes = []models.Note{}
-	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(notes)
+	resp := make([]models.NoteResponse, 0, len(notes))
+	for _, n := range notes {
+		resp = append(resp, toNoteResponse(n))
+	}
+	h.writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *Handler) CreateNote(w http.ResponseWriter, r *http.Request) {
@@ -45,14 +57,12 @@ func (h *Handler) CreateNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(note)
+	h.writeJSON(w, http.StatusCreated, toNoteResponse(*note))
 }
 
 func (h *Handler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
-	noteID, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	noteID, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid note id")
 		return
@@ -64,8 +74,8 @@ func (h *Handler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	note, err := h.Repo.UpdateNote(noteID, userID, req.Title, req.Content)
-	if err == sql.ErrNoRows {
+	note, err := h.Repo.UpdateNote(uint(noteID), userID, req.Title, req.Content)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		h.writeError(w, http.StatusNotFound, "note not found")
 		return
 	} else if err != nil {
@@ -74,19 +84,19 @@ func (h *Handler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(note)
+	h.writeJSON(w, http.StatusOK, toNoteResponse(*note))
 }
 
 func (h *Handler) DeleteNote(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
-	noteID, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	noteID, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid note id")
 		return
 	}
 
-	if err := h.Repo.DeleteNote(noteID, userID); err == sql.ErrNoRows {
+	err = h.Repo.DeleteNote(uint(noteID), userID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		h.writeError(w, http.StatusNotFound, "note not found")
 		return
 	} else if err != nil {

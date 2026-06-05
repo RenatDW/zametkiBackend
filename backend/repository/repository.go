@@ -4,7 +4,7 @@ import (
 	"errors"
 	"notes-server/models"
 
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +13,7 @@ type Repository struct {
 }
 
 func New(dsn string) (*Repository, error) {
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

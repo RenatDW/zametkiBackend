@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/zametkiBackend.iml" filepath="$PROJECT_DIR$/.idea/zametkiBackend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/notes-server.iml" filepath="$PROJECT_DIR$/.idea/notes-server.iml" />
     </modules>
   </component>
 </project>

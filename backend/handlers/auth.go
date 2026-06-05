@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -34,16 +35,12 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.Repo.CreateUser(req.Username, string(hash))
-	if err != nil {
-		// SQLite unique constraint
+	if err := h.Repo.CreateUser(req.Username, string(hash)); err != nil {
 		h.writeError(w, http.StatusConflict, "username already taken")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	h.writeJSON(w, http.StatusCreated, map[string]string{"status": "ok"})
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +51,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.Repo.GetUserByUsername(req.Username)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		h.writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	} else if err != nil {
@@ -79,6 +76,5 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(models.LoginResponse{Token: tokenStr})
+	h.writeJSON(w, http.StatusOK, models.LoginResponse{Token: tokenStr})
 }

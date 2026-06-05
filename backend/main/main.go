@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -24,15 +25,15 @@ func main() {
 	logger := zapLogger.Sugar()
 
 	dsn := fmt.Sprintf(
-        "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-        getEnv("DB_HOST", "localhost"),
-        getEnv("DB_PORT", "5432"),
-        getEnv("DB_USER", ""),
-        getEnv("DB_PASSWORD", ""),
-        getEnv("DB_NAME", ""),
-    )
-	jwtSecret  := getEnv("JWT_SECRET",  "change-me-in-production")
-	addr       := getEnv("ADDR",        ":8080")
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		getEnv("DB_HOST", "localhost"),
+		getEnv("DB_PORT", "5432"),
+		getEnv("DB_USER", ""),
+		getEnv("DB_PASSWORD", ""),
+		getEnv("DB_NAME", ""),
+	)
+	jwtSecret := getEnv("JWT_SECRET", "change-me-in-production")
+	addr := getEnv("ADDR", ":8080")
 	storageDir := getEnv("STORAGE_DIR", "storage")
 
 	// Создаём корневую директорию для файлов, если её нет
@@ -56,13 +57,13 @@ func main() {
 
 	// Публичные маршруты
 	r.HandleFunc("/api/register", h.Register).Methods(http.MethodPost)
-	r.HandleFunc("/api/login",    h.Login).Methods(http.MethodPost)
+	r.HandleFunc("/api/login", h.Login).Methods(http.MethodPost)
 
 	// Защищённые маршруты
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(middleware.Auth(jwtSecret))
-	api.HandleFunc("/files",        h.ListFiles).Methods(http.MethodGet)
-	api.HandleFunc("/files",        h.UploadFile).Methods(http.MethodPost)
+	api.HandleFunc("/files", h.ListFiles).Methods(http.MethodGet)
+	api.HandleFunc("/files", h.UploadFile).Methods(http.MethodPost)
 	api.HandleFunc("/files/{uuid}", h.DownloadFile).Methods(http.MethodGet)
 	api.HandleFunc("/files/{uuid}", h.DeleteFile).Methods(http.MethodDelete)
 
