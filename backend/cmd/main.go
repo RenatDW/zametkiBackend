@@ -23,7 +23,14 @@ func main() {
 	defer zapLogger.Sync()
 	logger := zapLogger.Sugar()
 
-	dsn        := getEnv("DB_DSN",      "notes.db")
+	dsn := fmt.Sprintf(
+        "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+        getEnv("DB_HOST", "localhost"),
+        getEnv("DB_PORT", "5432"),
+        getEnv("DB_USER", ""),
+        getEnv("DB_PASSWORD", ""),
+        getEnv("DB_NAME", ""),
+    )
 	jwtSecret  := getEnv("JWT_SECRET",  "change-me-in-production")
 	addr       := getEnv("ADDR",        ":8080")
 	storageDir := getEnv("STORAGE_DIR", "storage")
